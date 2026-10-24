@@ -9,8 +9,10 @@ export default function Producto() {
   const { agregarAlCarrito } = useCarrito();
   
   const producto = productos.find((p) => p.id === id);
-  const [cantidad, setCantidad] = useState("");
+  const [cantidad, setCantidad] = useState(1);
   const [total, setTotal] = useState(0);
+  const [mensaje, setMensaje] = useState("");
+  const [tipoMensaje, setTipoMensaje] = useState("");
 
   if (!producto) {
     return (
@@ -25,37 +27,49 @@ export default function Producto() {
     return "$" + precio.toLocaleString("es-CL");
   };
 
+  const mostrarMensaje = (texto, tipo) => {
+    setMensaje(texto);
+    setTipoMensaje(tipo);
+    setTimeout(() => {
+      setMensaje("");
+      setTipoMensaje("");
+    }, 3000);
+  };
+
   const calcularTotal = () => {
-    if (cantidad === "") {
-      alert("Debe ingresar una cantidad");
+    const cantidadNum = Number(cantidad);
+    
+    if (isNaN(cantidadNum) || cantidadNum < 1) {
+      mostrarMensaje("La cantidad debe ser mayor a 0", "error");
+      setTotal(0);
       return;
     }
-    if (Number(cantidad) < 1) {
-      alert("La cantidad debe ser mayor a 0");
+    
+    if (cantidadNum > producto.stock) {
+      mostrarMensaje(`Stock insuficiente. Disponible: ${producto.stock} unidades`, "error");
+      setTotal(0);
       return;
     }
-    if (Number(cantidad) > producto.stock) {
-      alert("La cantidad supera el stock disponible");
-      return;
-    }
-    const totalCalculado = Number(cantidad) * producto.precio;
+    
+    const totalCalculado = cantidadNum * producto.precio;
     setTotal(totalCalculado);
   };
 
   const handleAgregarAlCarrito = () => {
-    if (cantidad === "" || Number(cantidad) < 1) {
-      alert("Ingrese una cantidad válida");
-      return;
-    }
-    if (Number(cantidad) > producto.stock) {
-      alert("Stock insuficiente");
+    const cantidadNum = Number(cantidad);
+    
+    if (isNaN(cantidadNum) || cantidadNum < 1) {
+      mostrarMensaje("Ingrese una cantidad válida", "error");
       return;
     }
     
-    agregarAlCarrito(producto, Number(cantidad));
-    alert(`✅ ${producto.nombre} agregado al carrito`);
-    setCantidad("");
-    setTotal(0);
+    if (cantidadNum > producto.stock) {
+      mostrarMensaje(`Stock insuficiente. Disponible: ${producto.stock} unidades`, "error");
+      return;
+    }
+    
+    agregarAlCarrito(producto, cantidadNum);
+    mostrarMensaje(`${producto.nombre} agregado al carrito`, "exito");
   };
 
   return (
@@ -82,29 +96,50 @@ export default function Producto() {
 
         <p>Stock disponible: <span>{producto.stock} unidades</span></p>
 
+        {mensaje && (
+          <div
+            style={{
+              padding: "12px",
+              borderRadius: "8px",
+              marginBottom: "15px",
+              backgroundColor: tipoMensaje === "exito" ? "#d4edda" : "#f8d7da",
+              color: tipoMensaje === "exito" ? "#155724" : "#721c24",
+              border: `1px solid ${tipoMensaje === "exito" ? "#c3e6cb" : "#f5c6cb"}`,
+              fontWeight: "bold",
+            }}
+          >
+            {mensaje}
+          </div>
+        )}
+
         <div className="cantidad-producto">
           <label>Cantidad:</label>
           <input
             type="number"
             value={cantidad}
-            onChange={(e) => setCantidad(e.target.value)}
+            onChange={(e) => {
+              setCantidad(e.target.value);
+              setTotal(0);
+            }}
             min="1"
             max={producto.stock}
           />
         </div>
 
-        <button className="boton" onClick={calcularTotal}>
-          Calcular Total
+        <button className="boton" onClick={calcularTotal} style={{ marginRight: "10px" }}>
+          Calculadora Total
         </button>
 
         {total > 0 && (
-          <p id="totalProducto">Total: {formatarPrecio(total)}</p>
+          <p id="totalProducto" style={{ fontSize: "20px", fontWeight: "bold", marginTop: "15px" }}>
+            Total: {formatarPrecio(total)}
+          </p>
         )}
 
         <button 
           className="boton" 
           onClick={handleAgregarAlCarrito}
-          style={{ marginTop: "15px", backgroundColor: "#5E8C87" }}
+          style={{ marginTop: "15px" }}
         >
           Agregar al Carrito
         </button>

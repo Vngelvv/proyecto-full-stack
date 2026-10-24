@@ -1,7 +1,22 @@
 import { Link } from "react-router-dom";
 import { categorias } from "../data/categorias";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function Index() {
+  const location = useLocation(); 
+
+  useEffect(() => {
+    if (location.hash === "#contacto") {
+      setTimeout(() => {
+        const elemento = document.getElementById("contacto");
+        if (elemento) {
+          elemento.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    }
+  }, [location]);
+  
   return (
     <>
       <section className="seccion">

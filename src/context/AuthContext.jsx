@@ -1,26 +1,39 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
 
-// Credenciales estáticas (según la pauta)
-const USUARIO_ADMIN = {
-  correo: "admin@losmaestros.cl",
-  contrasena: "Admin123",
-  nombre: "Administrador",
-  rol: "admin"
-};
-
 export function AuthProvider({ children }) {
-  // Inicializa el estado leyendo desde localStorage
+  // Intentar recuperar la sesión de localStorage al iniciar
   const [usuario, setUsuario] = useState(() => {
-    const guardado = localStorage.getItem("usuario_sesion");
-    return guardado ? JSON.parse(guardado) : null;
+    const usuarioGuardado = localStorage.getItem("usuario");
+    return usuarioGuardado ? JSON.parse(usuarioGuardado) : null;
   });
+  
+  // Lista de usuarios en memoria
+  const [usuarios, setUsuarios] = useState([
+    { 
+      nombre: "Administrador", 
+      apellido: "Sistema", 
+      correo: "admin@losmaestros.cl", 
+      contrasena: "Admin123", 
+      rol: "admin" 
+    }
+  ]);
+
+  // Guardar en localStorage cada vez que cambia el usuario
+  useEffect(() => {
+    if (usuario) {
+      localStorage.setItem("usuario", JSON.stringify(usuario));
+    } else {
+      localStorage.removeItem("usuario");
+    }
+  }, [usuario]);
 
   const iniciarSesion = (correo, contrasena) => {
-    if (correo === USUARIO_ADMIN.correo && contrasena === USUARIO_ADMIN.contrasena) {
-      setUsuario(USUARIO_ADMIN);
-      localStorage.setItem("usuario_sesion", JSON.stringify(USUARIO_ADMIN));
+    const userFound = usuarios.find(u => u.correo === correo && u.contrasena === contrasena);
+    
+    if (userFound) {
+      setUsuario(userFound);
       return true;
     }
     return false;
@@ -28,11 +41,16 @@ export function AuthProvider({ children }) {
 
   const cerrarSesion = () => {
     setUsuario(null);
-    localStorage.removeItem("usuario_sesion");
+    localStorage.removeItem("usuario");
+  };
+
+  const registrarUsuario = (datos) => {
+    const nuevoUsuario = { ...datos, rol: "cliente" };
+    setUsuarios([...usuarios, nuevoUsuario]);
   };
 
   return (
-    <AuthContext.Provider value={{ usuario, iniciarSesion, cerrarSesion }}>
+    <AuthContext.Provider value={{ usuario, iniciarSesion, cerrarSesion, registrarUsuario }}>
       {children}
     </AuthContext.Provider>
   );

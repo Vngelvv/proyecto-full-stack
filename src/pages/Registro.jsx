@@ -24,7 +24,7 @@ export default function Registro() {
       return;
     }
 
-    alert("Registro realizado correctamente");
+   // Registro exitoso - redirigir al login
     navigate("/login");
   };
 
